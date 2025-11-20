@@ -1,0 +1,12 @@
+torch
+torchvision
+torchaudio
+numpy
+pillow
+tqdm
+opencv-python
+matplotlib
+scikit-learn
+streamlit
+transformers
+huggingface_hub
