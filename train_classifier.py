@@ -3,7 +3,7 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 from tqdm import tqdm
 
@@ -67,28 +67,26 @@ def create_dataloaders(
         ),
     ])
 
-    # Use the same underlying dataset first, then apply different transforms
-    base_dataset = CastingDataset(root_dir=train_root, transform=None)
+    # Two views of the same image folder, each with its own transform.
+    # (A single dataset shared by both subsets would end up with whichever
+    # transform was assigned last, silently disabling augmentation.)
+    train_base = CastingDataset(root_dir=train_root, transform=train_transform)
+    val_base = CastingDataset(root_dir=train_root, transform=val_transform)
 
-    total_len = len(base_dataset)
+    total_len = len(train_base)
     val_len = int(total_len * val_split)
     train_len = total_len - val_len
 
-    train_dataset, val_dataset = random_split(
-        base_dataset,
-        lengths=[train_len, val_len],
-        generator=torch.Generator().manual_seed(42),
-    )
-
-    # Attach transforms AFTER the split so val set is never augmented
-    train_dataset.dataset.transform = train_transform
-    val_dataset.dataset.transform = val_transform
+    # Same seeded permutation for both views, so train and val never overlap
+    perm = torch.randperm(total_len, generator=torch.Generator().manual_seed(42)).tolist()
+    train_dataset = Subset(train_base, perm[:train_len])
+    val_dataset = Subset(val_base, perm[train_len:])
 
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=0,  # you can try 2 or 4 later if your machine supports it
+        num_workers=0,  # increase on machines that support multiprocessing loaders
     )
 
     val_loader = DataLoader(
@@ -172,11 +170,10 @@ def evaluate(
 
 
 def main():
-    # === PATHS: adjust if needed ===
+    # === PATHS ===
     project_root = os.path.dirname(os.path.abspath(__file__))
 
-    # We'll train on the official train folder:
-    # D:\Projects\industrial_defect_detection\data\raw\casting_data\train
+    # Official train folder of the casting dataset: data/raw/casting_data/train
     train_root = os.path.join(
         project_root,
         "data",

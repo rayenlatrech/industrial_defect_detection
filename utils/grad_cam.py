@@ -24,7 +24,7 @@ class GradCAM:
 
         # Register hooks
         self._forward_hook = self.target_layer.register_forward_hook(self._save_activation)
-        self._backward_hook = self.target_layer.register_backward_hook(self._save_gradient)
+        self._backward_hook = self.target_layer.register_full_backward_hook(self._save_gradient)
 
     def _save_activation(self, module, input, output):
         # output: feature maps from target conv layer

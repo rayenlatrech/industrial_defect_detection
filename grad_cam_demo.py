@@ -118,7 +118,7 @@ def main():
     # 2) Load model
     model = load_model(ckpt_path, device=device)
 
-    # 3) Set up Grad-CAM on the last conv layer of your CNN
+    # 3) Set up Grad-CAM on the last conv layer of the CNN
     # For SimpleCastingCNN, the last Conv2d is at index 12 in model.features
     target_layer = model.features[12]
     grad_cam = GradCAM(model, target_layer)

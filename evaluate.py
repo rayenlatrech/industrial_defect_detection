@@ -119,8 +119,7 @@ def run_test(
 def main():
     project_root = os.path.dirname(os.path.abspath(__file__))
 
-    # Test folder:
-    # D:\Projects\industrial_defect_detection\data\raw\casting_data\test
+    # Official test folder of the casting dataset: data/raw/casting_data/test
     test_root = os.path.join(
         project_root,
         "data",

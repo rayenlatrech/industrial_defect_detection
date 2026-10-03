@@ -66,19 +66,28 @@ def generate_report_rule_based(info: InspectionInput) -> str:
     confidence_label = _format_confidence(prob)
     risk_level = _risk_level_from_anomaly_score(anomaly)
 
+    anomaly_sentence = {
+        "low": "The anomaly score is consistent with previously observed normal parts.",
+        "medium": "The anomaly score is moderately elevated compared with normal parts.",
+        "high": "The anomaly score indicates that this part deviates strongly from normal (OK) castings.",
+    }[risk_level]
+
     if cls == "ok_front":
         status_line = "Overall assessment: PART ACCEPTED (no clear defect detected)."
         detail_line = (
             "The classifier did not detect any visible surface defects on the casting. "
-            "The anomaly score is consistent with previously observed normal parts."
+            + anomaly_sentence
         )
+        if risk_level != "low":
+            detail_line += " The two models disagree, so manual review is recommended."
     else:
         status_line = "Overall assessment: PART REJECTED (surface defect suspected)."
         detail_line = (
             "The classifier detected visual patterns consistent with known surface defects. "
-            "The anomaly score indicates that this part deviates significantly from the distribution "
-            "of normal (OK) castings."
+            + anomaly_sentence
         )
+        if risk_level == "low":
+            detail_line += " The two models disagree, so manual review is recommended."
 
     comment_block = ""
     if info.additional_comment:
